@@ -21,7 +21,7 @@ import tensorflow as tf
 
 # Set the seed
 
-tf.random.set_seed(1)
+tf.random.set_seed(13)
 
 
 # -------------------------------------------------------------------------------
@@ -91,16 +91,20 @@ uni_ds_train_std = uni_ds_train_std.cache().shuffle(10000).batch(batch_size).rep
 uni_ds_valid_std = tf.data.Dataset.from_tensor_slices((uni_x_valid_std, uni_y_valid_std))
 uni_ds_valid_std = uni_ds_valid_std.batch(batch_size).repeat()
 
-for i in uni_ds_train_std.take(1):
+for batch in uni_ds_train_std.take(1):
+
+    array_time_series_of_feature = batch[0]
+    array_of_targets = batch[1]
 
     print('-'*96,
-          '\nThe dataset is made up of several batches, each containing 256 tuples. In particular, for each',
-          '\ntuple, the label is one element after the last element of the time series of the single feature.\n',
+          '\nThe dataset is made up of several batches, each containing an array of 256 time series of the feature'
+          '\nand an array of 256 targets. In particular, for each tuple (time series of the feature - target) the',
+          '\ntarget is one element after the last element of the time series of the feature.\n',
           '\n*** BATCH 0 ***',
-          '\n -- Tuple 0 --\n', i[0].numpy()[0], i[1].numpy()[0],
-          '\n -- Tuple 1 --\n', i[0].numpy()[1], i[1].numpy()[1],
-          '\n -- Tuple 254 --\n', i[0].numpy()[254], i[1].numpy()[254],
-          '\n -- Tuple 255 --\n', i[0].numpy()[255], i[1].numpy()[255])
+          '\n -- Tuple 0 --\n', array_time_series_of_feature.numpy()[0], array_of_targets.numpy()[0],
+          '\n -- Tuple 1 --\n', array_time_series_of_feature.numpy()[1], array_of_targets.numpy()[1],
+          '\n -- Tuple 254 --\n', array_time_series_of_feature.numpy()[254], array_of_targets.numpy()[254],
+          '\n -- Tuple 255 --\n', array_time_series_of_feature.numpy()[255], array_of_targets.numpy()[255])
 
 
 # -------------------------------------------------------------------------------
@@ -124,37 +128,58 @@ print('Input shape: (time steps x num features) =', uni_x_train_std.shape[-2:],
       '\nNote that the number of batches is irrelevant')
 
 
-# Compile the model to specify optimizer, loss function
+# Compile the model to specify optimizer and loss function
 
 simple_lstm_model.compile(optimizer='adam', loss='mae')
 
 
-# Make a sample prediction to check the output of the model
-
+# -------------------------------------------------------------------------------
+# 3. TRAIN THE MODEL
+# -------------------------------------------------------------------------------
 for x, y in uni_ds_valid_std.take(1):
+    print(simple_lstm_model.predict(x).shape)
 
-    print('Prediction shape:', simple_lstm_model.predict(x).shape, '\n')
+# Train the lstm recurrent neural network
+
+print('-' * 96, '\nInput for training: dataset made up of several batches each containing 256 tuples.')
+history = simple_lstm_model.fit(uni_ds_train_std, epochs=10, steps_per_epoch=200, validation_data=uni_ds_valid_std, validation_steps=50)
+
+
+# Visualize the learning curve
+
+hist = history.history
+
+plt.figure()
+plt.plot(hist['loss'])
+plt.xlabel('Epoch')
+plt.title('Training loss')
+plt.tick_params(axis='both', which='major')
+
+
+# -------------------------------------------------------------------------------
+# 3. MAKE PREDICTIONS
+# -------------------------------------------------------------------------------
 
 
 # Create a function to plot the history, true value and model prediction
 
-def plot_prediction(plot_data, delta, title):
+def plot_prediction(data, delta, title):
 
+    plt.figure()
     labels = ['History', 'True Future', 'Model Prediction']
     marker = ['.-', 'bx', 'rx']
 
-    delta = delta if delta else 0
-    time_steps = list(range(-plot_data[0].shape[0], 0))
+    time_steps = list(range(-data[0].shape[0], 0))
 
-    for i, x in enumerate(plot_data):
+    for i, x in enumerate(data):
 
         if i:
 
-            plt.plot(delta, plot_data[i], marker[i], label=labels[i])
+            plt.plot(delta, data[i], marker[i], label=labels[i])
 
         else:
 
-            plt.plot(time_steps, plot_data[i].flatten(), marker[i], label=labels[i])
+            plt.plot(time_steps, data[i].flatten(), marker[i], label=labels[i])
 
     plt.xlim([time_steps[0], (delta+5)*2])
     plt.xlabel('Time-Step')
@@ -164,24 +189,17 @@ def plot_prediction(plot_data, delta, title):
     return plt
 
 
-# -------------------------------------------------------------------------------
-# 3. TRAIN THE MODEL
-# -------------------------------------------------------------------------------
+# Make a few predictions
 
+print('-' * 96, '\nInput for predicting: dataset made up of several batches each containing 256 tuples.')
+for batch in uni_ds_valid_std.take(3):
 
-# Train the lstm recurrent neural network
+    array_time_series_of_feature = batch[0]
+    array_of_targets = batch[1]
 
-history = simple_lstm_model.fit(uni_ds_train_std, epochs=10, steps_per_epoch=200, validation_data=uni_ds_valid_std, validation_steps=50)
+    prediction = simple_lstm_model.predict(array_time_series_of_feature)
 
-
-# Now that you have trained your simple LSTM, let's try and make a few predictions
-
-for x, y in uni_ds_valid_std.take(3):
-
-    prediction = simple_lstm_model.predict(x)
-
-    plot = plot_prediction([x[0].numpy(), y[0].numpy(), prediction[0]], 0, 'Simple LSTM model')
-    plot.show()
+    plot = plot_prediction([array_time_series_of_feature.numpy()[0], array_of_targets.numpy()[0], prediction[0]], 0, 'Simple LSTM model')
 
 
 # -------------------------------------------------------------------------------
