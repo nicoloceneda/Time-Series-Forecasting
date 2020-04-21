@@ -93,10 +93,10 @@ uni_ds_valid_std = uni_ds_valid_std.batch(batch_size).repeat()
 
 for i in uni_ds_train_std.take(1):
 
-    print('-'*96, '\n',
-          'The dataset is made up of several batches, each containing 256 tuples. In particular, for each\n',
-          'tuple, the label is one element after the last element of the time series of the single feature\n',
-          ' *** BATCH 1 ***',
+    print('-'*96,
+          '\nThe dataset is made up of several batches, each containing 256 tuples. In particular, for each',
+          '\ntuple, the label is one element after the last element of the time series of the single feature.\n',
+          '\n*** BATCH 0 ***',
           '\n -- Tuple 0 --\n', i[0].numpy()[0], i[1].numpy()[0],
           '\n -- Tuple 1 --\n', i[0].numpy()[1], i[1].numpy()[1],
           '\n -- Tuple 254 --\n', i[0].numpy()[254], i[1].numpy()[254],
@@ -117,8 +117,11 @@ simple_lstm_model.add(tf.keras.layers.Dense(1))
 
 # Print the model summary
 
+print('-'*96)
 simple_lstm_model.summary()
-print('Input shape:', uni_x_train_std.shape[-2:])
+print('Input shape: (time steps x num features) =', uni_x_train_std.shape[-2:],
+      '\nNote that the batch size is not specified in "input shape"',
+      '\nNote that the number of batches is irrelevant')
 
 
 # Compile the model to specify optimizer, loss function
