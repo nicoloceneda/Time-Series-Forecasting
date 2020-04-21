@@ -48,11 +48,11 @@ uni_data = uni_data.values
 
 train_split = 300000
 uni_train_mean = uni_data[:train_split].mean()
-uni_train_std = uni_data[:train_split].std()
-uni_data_std = (uni_data - uni_train_mean) / uni_train_std
+uni_ds_train_std = uni_data[:train_split].std()
+uni_data_std = (uni_data - uni_train_mean) / uni_ds_train_std
 
 
-# Create features and targets for train and valid subsets
+# Create time series of features and targets for train and valid subsets
 
 def uni_dataset_generator(dataset, start_index, end_index, history_len, target_len):
 
@@ -63,7 +63,7 @@ def uni_dataset_generator(dataset, start_index, end_index, history_len, target_l
 
     for i in range(start_index, end_index - history_len):
 
-        # range(start_index, start_index + history_size) | range(end_index - 1 - history_size, end_index - 1)
+        # range(start_index, start_index + history_len) | range(end_index - 1 - history_len, end_index - 1)
         history_index = range(i, i + history_len)
         data.append(np.reshape(dataset[history_index], (history_len, 1)))
 
@@ -80,15 +80,25 @@ uni_x_train_std, uni_y_train_std = uni_dataset_generator(uni_data_std, 0, train_
 uni_x_valid_std, uni_y_valid_std = uni_dataset_generator(uni_data_std, train_split, None, history_len, target_len)
 
 
-# Cache, shuffle and batch the train and valid subsets
+# Create the train and valid subsets containing tuples of size (20x1) and (1,1);
+# then cache and shuffle the dataset of tuples tuples and create batches with 256 tuples each
 
 batch_size = 256
 
-uni_train_std = tf.data.Dataset.from_tensor_slices((uni_x_train_std, uni_y_train_std))
-uni_train_std = uni_train_std.cache().shuffle(10000).batch(batch_size).repeat()
+uni_ds_train_std = tf.data.Dataset.from_tensor_slices((uni_x_train_std, uni_y_train_std))
+uni_ds_train_std = uni_ds_train_std.cache().shuffle(10000).batch(batch_size).repeat()
 
-uni_valid_std = tf.data.Dataset.from_tensor_slices((uni_x_valid_std, uni_y_valid_std))
-uni_valid_std = uni_valid_std.batch(batch_size).repeat()
+uni_ds_valid_std = tf.data.Dataset.from_tensor_slices((uni_x_valid_std, uni_y_valid_std))
+uni_ds_valid_std = uni_ds_valid_std.batch(batch_size).repeat()
+
+for i in uni_ds_train_std.take(1):
+
+    print('The label is one element after the last element of the time series of the feature',
+          ' *** BATCH 1 ***',
+          '\n -- Tuple 0 --\n', i[0].numpy()[0], i[1].numpy()[0],
+          '\n -- Tuple 1 --\n', i[0].numpy()[1], i[1].numpy()[1],
+          '\n -- Tuple 254 --\n', i[0].numpy()[254], i[1].numpy()[254],
+          '\n -- Tuple 255 --\n', i[0].numpy()[255], i[1].numpy()[255])
 
 
 # -------------------------------------------------------------------------------
@@ -144,7 +154,7 @@ simple_lstm_model.compile(optimizer='adam', loss='mae')
 
 # Make a sample prediction to check the output of the model
 
-for x, y in uni_valid_std.take(1):
+for x, y in uni_ds_valid_std.take(1):
 
     print('Prediction shape:', simple_lstm_model.predict(x).shape, '\n')
 
@@ -156,12 +166,12 @@ for x, y in uni_valid_std.take(1):
 
 # Train the lstm recurrent neural network
 
-history = simple_lstm_model.fit(uni_train_std, epochs=10, steps_per_epoch=200, validation_data=uni_valid_std, validation_steps=50)
+history = simple_lstm_model.fit(uni_ds_train_std, epochs=10, steps_per_epoch=200, validation_data=uni_ds_valid_std, validation_steps=50)
 
 
 # Now that you have trained your simple LSTM, let's try and make a few predictions
 
-for x, y in uni_valid_std.take(3):
+for x, y in uni_ds_valid_std.take(3):
 
     prediction = simple_lstm_model.predict(x)
 
