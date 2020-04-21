@@ -25,6 +25,5 @@
 │                                                                                                
 └── multi_time_series_forecasting.py          <-- Implementation of a lstm recurrent neural network for 
                                                   multivariate time series forecasting.
-
 </pre>
 
