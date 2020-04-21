@@ -20,10 +20,12 @@
 ## Content of the Scripts:
 <pre>
 │
-├── uni_time_series_forecasting.py            <-- Implementation of a lstm recurrent neural network for 
-│                                                 univariate time series forecasting.
+├── uni_series_single_forecast.py             <-- Implementation of a lstm recurrent neural network for 
+│                                                 univariate time series forecasting of a single point 
+│                                                 in the future.
 │                                                                                                
-└── multi_time_series_forecasting.py          <-- Implementation of a lstm recurrent neural network for 
-                                                  multivariate time series forecasting.
+└── multi_series_single_forecast.py           <-- Implementation of a lstm recurrent neural network for 
+                                                  multivariate time series forecasting of a single point 
+                                                  in the future.
 </pre>
 
