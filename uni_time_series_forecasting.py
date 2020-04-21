@@ -32,14 +32,14 @@ tf.random.set_seed(1)
 # Import the dataset
 
 climate = pd.read_csv('climate dataset/extracted/jena_climate_2009_2016.csv')
-print(climate.head())
+print('-'*96, '\n', climate.head())
 
 
 # Select only one feature
 
 uni_data = climate['T (degC)']
 uni_data.index = climate['Date Time']
-print(uni_data.head())
+print('-'*96, '\n', uni_data.head())
 
 uni_data = uni_data.values
 
@@ -93,7 +93,9 @@ uni_ds_valid_std = uni_ds_valid_std.batch(batch_size).repeat()
 
 for i in uni_ds_train_std.take(1):
 
-    print('The label is one element after the last element of the time series of the feature',
+    print('-'*96, '\n',
+          'The dataset is made up of several batches, each containing 256 tuples. In particular, for each\n',
+          'tuple, the label is one element after the last element of the time series of the single feature\n',
           ' *** BATCH 1 ***',
           '\n -- Tuple 0 --\n', i[0].numpy()[0], i[1].numpy()[0],
           '\n -- Tuple 1 --\n', i[0].numpy()[1], i[1].numpy()[1],
@@ -104,6 +106,31 @@ for i in uni_ds_train_std.take(1):
 # -------------------------------------------------------------------------------
 # 2. DESIGN THE MODEL
 # -------------------------------------------------------------------------------
+
+
+# Design the lstm recurrent neural network
+
+simple_lstm_model = tf.keras.models.Sequential()
+simple_lstm_model.add(tf.keras.layers.LSTM(units=8, input_shape=uni_x_train_std.shape[-2:]))
+simple_lstm_model.add(tf.keras.layers.Dense(1))
+
+
+# Print the model summary
+
+simple_lstm_model.summary()
+print('Input shape:', uni_x_train_std.shape[-2:])
+
+
+# Compile the model to specify optimizer, loss function
+
+simple_lstm_model.compile(optimizer='adam', loss='mae')
+
+
+# Make a sample prediction to check the output of the model
+
+for x, y in uni_ds_valid_std.take(1):
+
+    print('Prediction shape:', simple_lstm_model.predict(x).shape, '\n')
 
 
 # Create a function to plot the history, true value and model prediction
@@ -132,31 +159,6 @@ def plot_prediction(plot_data, delta, title):
     plt.legend()
 
     return plt
-
-
-# Design the lstm recurrent neural network
-
-simple_lstm_model = tf.keras.models.Sequential()
-simple_lstm_model.add(tf.keras.layers.LSTM(units=8, input_shape=uni_x_train_std.shape[-2:]))
-simple_lstm_model.add(tf.keras.layers.Dense(1))
-
-
-# Print the model summary
-
-simple_lstm_model.summary()
-print('Input shape:', uni_x_train_std.shape[-2:])
-
-
-# Compile the model to specify optimizer, loss function
-
-simple_lstm_model.compile(optimizer='adam', loss='mae')
-
-
-# Make a sample prediction to check the output of the model
-
-for x, y in uni_ds_valid_std.take(1):
-
-    print('Prediction shape:', simple_lstm_model.predict(x).shape, '\n')
 
 
 # -------------------------------------------------------------------------------
