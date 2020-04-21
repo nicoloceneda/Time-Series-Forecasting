@@ -32,6 +32,7 @@ tf.random.set_seed(13)
 # Import the dataset
 
 climate = pd.read_csv('climate dataset/extracted/jena_climate_2009_2016.csv')
+
 print('-'*96, '\n', climate.head())
 
 
@@ -39,6 +40,7 @@ print('-'*96, '\n', climate.head())
 
 uni_data = climate['T (degC)']
 uni_data.index = climate['Date Time']
+
 print('-'*96, '\n', uni_data.head())
 
 uni_data = uni_data.values
@@ -122,7 +124,9 @@ simple_lstm_model.add(tf.keras.layers.Dense(1))
 # Print the model summary
 
 print('-'*96)
+
 simple_lstm_model.summary()
+
 print('Input shape: (time steps x num features) =', uni_x_train_std.shape[-2:],
       '\nNote that the batch size is not specified in "input shape"',
       '\nNote that the number of batches is irrelevant')
@@ -142,6 +146,7 @@ for x, y in uni_ds_valid_std.take(1):
 # Train the lstm recurrent neural network
 
 print('-' * 96, '\nInput for training: dataset made up of several batches each containing 256 tuples.')
+
 history = simple_lstm_model.fit(uni_ds_train_std, epochs=10, steps_per_epoch=200, validation_data=uni_ds_valid_std, validation_steps=50)
 
 
@@ -192,6 +197,7 @@ def plot_prediction(data, delta, title):
 # Make a few predictions
 
 print('-' * 96, '\nInput for predicting: dataset made up of several batches each containing 256 tuples.')
+
 for batch in uni_ds_valid_std.take(3):
 
     array_time_series_of_feature = batch[0]
