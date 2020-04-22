@@ -123,7 +123,7 @@ for batch in multi_ds_train_std.take(1):
 # Design the lstm recurrent neural network
 
 lstm_model = tf.keras.models.Sequential()
-lstm_model.add(tf.keras.layers.LSTM(units=32, input_shape=multi_single_x_train_std.shape[-2:]))
+lstm_model.add(tf.keras.layers.LSTM(units=32, return_sequences=False, input_shape=multi_single_x_train_std.shape[-2:]))
 lstm_model.add(tf.keras.layers.Dense(1))
 
 

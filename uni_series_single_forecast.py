@@ -117,8 +117,13 @@ for batch in uni_ds_train_std.take(1):
 # Design the lstm recurrent neural network
 
 lstm_model = tf.keras.models.Sequential()
-lstm_model.add(tf.keras.layers.LSTM(units=8, input_shape=uni_x_train_std.shape[-2:]))
+lstm_model.add(tf.keras.layers.LSTM(units=8, return_sequences=False, input_shape=uni_x_train_std.shape[-2:]))
 lstm_model.add(tf.keras.layers.Dense(1))
+
+# ALTERNATIVE IMPLEMENTATION:
+# --------------------------
+# lstm_model.add(tf.keras.layers.RNN(tf.keras.layers.LSTMCell(units=8, input_shape=uni_x_train_std.shape[-2:])))
+# This requires to delay the "Print the model summary" step until the model has been trained
 
 
 # Print the model summary
