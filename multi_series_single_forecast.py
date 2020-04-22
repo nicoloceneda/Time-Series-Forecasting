@@ -215,7 +215,6 @@ for batch in multi_ds_valid_std.take(3):
     plot = plot_prediction([array_time_series_of_features.numpy()[0][:, 1], array_of_targets.numpy()[0], prediction[0]], 12, 'Simple LSTM model')
 
 
-
 # -------------------------------------------------------------------------------
 # 5. GENERAL
 # -------------------------------------------------------------------------------
