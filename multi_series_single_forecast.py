@@ -54,9 +54,9 @@ multi_train_std = multi_data[:train_split].std(axis=0)
 multi_data_std = (multi_data - multi_train_mean) / multi_train_std
 
 
-# Generate the train and valid subsets
+# Create time series of features and targets for train and valid subsets
 
-def dataset_generator(dataset, target, start_index, end_index, history_len, target_len, step, single_step=False):
+def multi_dataset_generator(dataset, target, start_index, end_index, history_len, target_len, step, single_step):
 
     end_index = len(dataset) - target_len if end_index is None else end_index
 
@@ -65,15 +65,18 @@ def dataset_generator(dataset, target, start_index, end_index, history_len, targ
 
     for i in range(start_index, end_index - history_len):
 
-        history_index = range(i, i + history_len, step)  # range(start_index, start_index + history_size) | range(end_index - 1 - history_size, end_index - 1)
+        # range(start_index, start_index + history_len) | range(end_index - 1 - history_len, end_index - 1)
+        history_index = range(i, i + history_len, step)
         data.append(dataset[history_index])
 
         if single_step:
 
-            labels.append(target[i + history_len + target_len])  # (start_index + history_size + target_size) | (end_index - 1 + target_size)
+            # (start_index + history_len + target_len) | (end_index - 1 + target_len)
+            labels.append(target[i + history_len + target_len])
 
         else:
 
+            # (start_index + history_len: start_index + history_len + target_len) | (end_index - 1: end_index - 1 + target_len)
             labels.append(target[i + history_len: i + history_len + target_len])
 
     return np.array(data), np.array(labels)
@@ -83,20 +86,33 @@ history_len = 720
 target_len = 72
 step = 6
 
-x_train_std_single, y_train_std_single = dataset_generator(ds_std, ds_std[:, 1], 0, train_split, history_len, target_len, step, single_step=True)
-x_valid_std_single, y_valid_std_single = dataset_generator(ds_std, ds_std[:, 1], train_split, None, history_len, target_len, step, single_step=True)
+multi_single_x_train_std, multi_single_y_train_std = multi_dataset_generator(multi_data_std, multi_data_std[:, 1], 0, train_split, history_len, target_len, step, single_step=True)
+multi_single_x_valid_std, multi_single_y_valid_std = multi_dataset_generator(multi_data_std, multi_data_std[:, 1], train_split, None, history_len, target_len, step, single_step=True)
 
 
-# Cache, shuffle and batch the train and valid subsets
+# Create the train and valid subsets containing tuples of size (120x3) and (1,1);
+# then cache and shuffle the dataset of tuples and create batches with 256 tuples each
 
 batch_size = 256
-tf.random.set_seed(1)
 
-ds_train = tf.data.Dataset.from_tensor_slices((x_train_std_single, y_train_std_single))
-ds_train = ds_train.cache().shuffle(10000).batch(batch_size).repeat()
+multi_ds_train_std = tf.data.Dataset.from_tensor_slices((multi_single_x_train_std, multi_single_y_train_std))
+multi_ds_train_std = multi_ds_train_std.cache().shuffle(10000).batch(batch_size).repeat()
 
-ds_valid = tf.data.Dataset.from_tensor_slices((x_valid_std_single, y_valid_std_single))
-ds_valid = ds_valid.batch(batch_size).repeat()
+multi_ds_valid_std = tf.data.Dataset.from_tensor_slices((multi_single_x_valid_std, multi_single_y_valid_std))
+multi_ds_valid_std = multi_ds_valid_std.batch(batch_size).repeat()
+
+for batch in multi_ds_train_std.take(1):
+
+    array_time_series_of_features = batch[0]
+    array_of_targets = batch[1]
+
+    print('-'*96,
+          '\nThe dataset is made up of several batches, each containing an array of 256 time series of the features'
+          '\nand an array of 256 targets. In particular, for each tuple (time series of the features - target) the',
+          '\ntarget is 72 elements after the last element of the time series of the features.\n',
+          '\n*** BATCH 0',
+          '\n -- Tuple 0\n', array_time_series_of_features.numpy()[0], array_of_targets.numpy()[0],
+          '\n -- Tuple 255\n', array_time_series_of_features.numpy()[255], array_of_targets.numpy()[255])
 
 
 # -------------------------------------------------------------------------------
@@ -106,27 +122,25 @@ ds_valid = ds_valid.batch(batch_size).repeat()
 
 # Design the lstm recurrent neural network
 
-simple_lstm_step_model = tf.keras.models.Sequential()
-simple_lstm_step_model.add(tf.keras.layers.LSTM(units=32, input_shape=x_train_std_single.shape[-2:]))
-simple_lstm_step_model.add(tf.keras.layers.Dense(1))
+simple_lstm_model = tf.keras.models.Sequential()
+simple_lstm_model.add(tf.keras.layers.LSTM(units=32, input_shape=multi_single_x_train_std.shape[-2:]))
+simple_lstm_model.add(tf.keras.layers.Dense(1))
 
 
 # Print the model summary
 
-simple_lstm_step_model.summary()
-print('Input shape:', x_train_std_single.shape[-2:])
+print('-'*96)
+
+simple_lstm_model.summary()
+
+print('Input shape: (time steps x num features) =', multi_single_x_train_std.shape[-2:],
+      '\nNote that the batch size is not specified in "input shape"',
+      '\nNote that the number of batches is irrelevant')
 
 
-# Compile the model to specify optimizer, loss function
+# Compile the model to specify optimizer and loss function
 
-simple_lstm_step_model.compile(optimizer=tf.keras.optimizers.RMSprop(), loss='mae')
-
-
-# Make a sample prediction to check the output of the model
-
-for x, y in ds_valid.take(1):
-
-    print('Prediction shape:', simple_lstm_step_model.predict(x).shape, '\n')
+simple_lstm_model.compile(optimizer=tf.keras.optimizers.RMSprop(), loss='mae')
 
 
 # -------------------------------------------------------------------------------
@@ -136,50 +150,48 @@ for x, y in ds_valid.take(1):
 
 # Train the lstm recurrent neural network
 
-single_step_history = simple_lstm_step_model.fit(ds_train, epochs=10, steps_per_epoch=200, validation_data=ds_valid, validation_steps=50)
+print('-' * 96, '\nInput for training: dataset made up of several batches each containing 256 tuples.')
+
+history = simple_lstm_model.fit(multi_ds_train_std, epochs=10, steps_per_epoch=200, validation_data=multi_ds_valid_std, validation_steps=50)
 
 
-# Plot the training history
+# Visualize the learning curve
 
-def plot_train_history(history, title):
+hist = history.history
 
-    loss = history.history['loss']
-    val_loss = history.history['val_loss']
-
-    epochs = range(len(loss))
-
-    plt.figure()
-
-    plt.plot(epochs, loss, 'b', label='Training loss')
-    plt.plot(epochs, val_loss, 'r', label='Validation loss')
-    plt.title(title)
-    plt.legend()
-
-    plt.show()
+plt.figure()
+plt.plot(hist['loss'], 'b', label='Training loss')
+plt.plot(hist['val_loss'], 'r', label='Validation loss')
+plt.xlabel('Epoch')
+plt.title('Training and validation loss')
+plt.legend()
+plt.tick_params(axis='both', which='major')
 
 
-plot_train_history(single_step_history, 'Single Step Training and validation loss')
+# -------------------------------------------------------------------------------
+# 3. MAKE PREDICTIONS
+# -------------------------------------------------------------------------------
 
 
 # Create a function to plot the history, true value and model prediction
 
-def show_plot(plot_data, delta, title):
+def plot_prediction(data, delta, title):
 
+    plt.figure()
     labels = ['History', 'True Future', 'Model Prediction']
     marker = ['.-', 'bx', 'rx']
 
-    delta = delta if delta else 0
-    time_steps = list(range(-plot_data[0].shape[0], 0))
+    time_steps = list(range(-data[0].shape[0], 0))
 
-    for i, x in enumerate(plot_data):
+    for i, x in enumerate(data):
 
         if i:
 
-            plt.plot(delta, plot_data[i], marker[i], label=labels[i])
+            plt.plot(delta, data[i], marker[i], label=labels[i])
 
         else:
 
-            plt.plot(time_steps, plot_data[i].flatten(), marker[i], label=labels[i])
+            plt.plot(time_steps, data[i].flatten(), marker[i], label=labels[i])
 
     plt.xlim([time_steps[0], (delta+5)*2])
     plt.xlabel('Time-Step')
@@ -189,14 +201,19 @@ def show_plot(plot_data, delta, title):
     return plt
 
 
-# Now that you have trained your simple LSTM, let's try and make a few predictions
+# Make a few predictions
 
-for x, y in ds_valid.take(3):
+print('-' * 96, '\nInput for predicting: dataset made up of several batches each containing 256 tuples.')
 
-    prediction = simple_lstm_step_model.predict(x)
+for batch in multi_ds_valid_std.take(3):
 
-    plot = show_plot([x[0][:, 1].numpy(), y[0].numpy(), prediction[0]], 12, 'Simple Step Prediction')
-    plot.show()
+    array_time_series_of_features = batch[0]
+    array_of_targets = batch[1]
+
+    prediction = simple_lstm_model.predict(array_time_series_of_features)
+
+    plot = plot_prediction([array_time_series_of_features.numpy()[0][:, 1], array_of_targets.numpy()[0], prediction[0]], 12, 'Simple LSTM model')
+
 
 
 # -------------------------------------------------------------------------------
