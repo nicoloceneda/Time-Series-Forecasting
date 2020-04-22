@@ -120,10 +120,26 @@ lstm_model = tf.keras.models.Sequential()
 lstm_model.add(tf.keras.layers.LSTM(units=8, return_sequences=False, input_shape=uni_x_train_std.shape[-2:]))
 lstm_model.add(tf.keras.layers.Dense(1))
 
-# ALTERNATIVE IMPLEMENTATION:
-# --------------------------
-# lstm_model.add(tf.keras.layers.RNN(tf.keras.layers.LSTMCell(units=8, input_shape=uni_x_train_std.shape[-2:])))
-# This requires to delay the "Print the model summary" step until the model has been trained
+""" ALTERNATIVE IMPLEMENTATION:
+    --------------------------
+    lstm_model.add(tf.keras.layers.RNN(tf.keras.layers.LSTMCell(units=8, input_shape=uni_x_train_std.shape[-2:])))
+    
+    This requires to delay the "Print the model summary" step until the model has been trained
+"""
+
+print('-'*96,
+      '\nLSTM LAYER',
+      '\nWeight kernel:            4(FE x HU)          = (FE x 4HU) =', lstm_model.weights[0].shape,
+      '\nWeight recurrent kernel:  4(HU x HU)          = (HU x 4HU) =', lstm_model.weights[1].shape,
+      '\nWeight bias:              4(BS x HU) = 4(HU,) = (4HU,)     =', lstm_model.weights[2].shape,
+      '\n-----------------------                                      -------',
+      '\nTotal                                                          320')
+
+print('\nDENSE LAYER',
+      '\nWeight kernel:                                              ', lstm_model.weights[3].shape,
+      '\nWeight :                                                    ', lstm_model.weights[4].shape,
+      '\n-------------                                                -------',
+      '\nTotal                                                           9')
 
 
 # Print the model summary
