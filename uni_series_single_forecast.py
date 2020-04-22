@@ -82,7 +82,7 @@ uni_x_train_std, uni_y_train_std = uni_dataset_generator(uni_data_std, 0, train_
 uni_x_valid_std, uni_y_valid_std = uni_dataset_generator(uni_data_std, train_split, None, history_len, target_len)
 
 
-# Create the train and valid subsets containing tuples of size (20x1) and (1,1);
+# Create the train and valid subsets containing tuples of size (20x1) and (1,);
 # then cache and shuffle the dataset of tuples and create batches with 256 tuples each
 
 batch_size = 256
@@ -116,16 +116,16 @@ for batch in uni_ds_train_std.take(1):
 
 # Design the lstm recurrent neural network
 
-simple_lstm_model = tf.keras.models.Sequential()
-simple_lstm_model.add(tf.keras.layers.LSTM(units=8, input_shape=uni_x_train_std.shape[-2:]))
-simple_lstm_model.add(tf.keras.layers.Dense(1))
+lstm_model = tf.keras.models.Sequential()
+lstm_model.add(tf.keras.layers.LSTM(units=8, input_shape=uni_x_train_std.shape[-2:]))
+lstm_model.add(tf.keras.layers.Dense(1))
 
 
 # Print the model summary
 
 print('-'*96)
 
-simple_lstm_model.summary()
+lstm_model.summary()
 
 print('Input shape: (time steps x num features) =', uni_x_train_std.shape[-2:],
       '\nNote that the batch size is not specified in "input shape"',
@@ -134,7 +134,7 @@ print('Input shape: (time steps x num features) =', uni_x_train_std.shape[-2:],
 
 # Compile the model to specify optimizer and loss function
 
-simple_lstm_model.compile(optimizer='adam', loss='mae')
+lstm_model.compile(optimizer='adam', loss='mae')
 
 
 # -------------------------------------------------------------------------------
@@ -146,7 +146,7 @@ simple_lstm_model.compile(optimizer='adam', loss='mae')
 
 print('-' * 96, '\nInput for training: dataset made up of several batches each containing 256 tuples.')
 
-history = simple_lstm_model.fit(uni_ds_train_std, epochs=10, steps_per_epoch=200, validation_data=uni_ds_valid_std, validation_steps=50)
+history = lstm_model.fit(uni_ds_train_std, epochs=10, steps_per_epoch=200, validation_data=uni_ds_valid_std, validation_steps=50)
 
 
 # Visualize the learning curve
@@ -204,7 +204,7 @@ for batch in uni_ds_valid_std.take(3):
     array_time_series_of_feature = batch[0]
     array_of_targets = batch[1]
 
-    prediction = simple_lstm_model.predict(array_time_series_of_feature)
+    prediction = lstm_model.predict(array_time_series_of_feature)
 
     plot = plot_prediction([array_time_series_of_feature.numpy()[0], array_of_targets.numpy()[0], prediction[0]], 0, 'Simple LSTM model')
 

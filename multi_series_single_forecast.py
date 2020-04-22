@@ -90,7 +90,7 @@ multi_single_x_train_std, multi_single_y_train_std = multi_dataset_generator(mul
 multi_single_x_valid_std, multi_single_y_valid_std = multi_dataset_generator(multi_data_std, multi_data_std[:, 1], train_split, None, history_len, target_len, step, single_step=True)
 
 
-# Create the train and valid subsets containing tuples of size (120x3) and (1,1);
+# Create the train and valid subsets containing tuples of size (120x3) and (1,);
 # then cache and shuffle the dataset of tuples and create batches with 256 tuples each
 
 batch_size = 256
@@ -122,16 +122,16 @@ for batch in multi_ds_train_std.take(1):
 
 # Design the lstm recurrent neural network
 
-simple_lstm_model = tf.keras.models.Sequential()
-simple_lstm_model.add(tf.keras.layers.LSTM(units=32, input_shape=multi_single_x_train_std.shape[-2:]))
-simple_lstm_model.add(tf.keras.layers.Dense(1))
+lstm_model = tf.keras.models.Sequential()
+lstm_model.add(tf.keras.layers.LSTM(units=32, input_shape=multi_single_x_train_std.shape[-2:]))
+lstm_model.add(tf.keras.layers.Dense(1))
 
 
 # Print the model summary
 
 print('-'*96)
 
-simple_lstm_model.summary()
+lstm_model.summary()
 
 print('Input shape: (time steps x num features) =', multi_single_x_train_std.shape[-2:],
       '\nNote that the batch size is not specified in "input shape"',
@@ -140,7 +140,7 @@ print('Input shape: (time steps x num features) =', multi_single_x_train_std.sha
 
 # Compile the model to specify optimizer and loss function
 
-simple_lstm_model.compile(optimizer=tf.keras.optimizers.RMSprop(), loss='mae')
+lstm_model.compile(optimizer=tf.keras.optimizers.RMSprop(), loss='mae')
 
 
 # -------------------------------------------------------------------------------
@@ -152,7 +152,7 @@ simple_lstm_model.compile(optimizer=tf.keras.optimizers.RMSprop(), loss='mae')
 
 print('-' * 96, '\nInput for training: dataset made up of several batches each containing 256 tuples.')
 
-history = simple_lstm_model.fit(multi_ds_train_std, epochs=10, steps_per_epoch=200, validation_data=multi_ds_valid_std, validation_steps=50)
+history = lstm_model.fit(multi_ds_train_std, epochs=10, steps_per_epoch=200, validation_data=multi_ds_valid_std, validation_steps=50)
 
 
 # Visualize the learning curve
@@ -210,7 +210,7 @@ for batch in multi_ds_valid_std.take(3):
     array_time_series_of_features = batch[0]
     array_of_targets = batch[1]
 
-    prediction = simple_lstm_model.predict(array_time_series_of_features)
+    prediction = lstm_model.predict(array_time_series_of_features)
 
     plot = plot_prediction([array_time_series_of_features.numpy()[0][:, 1], array_of_targets.numpy()[0], prediction[0]], 12, 'Simple LSTM model')
 
