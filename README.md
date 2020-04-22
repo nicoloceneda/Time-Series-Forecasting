@@ -5,7 +5,7 @@
 *Website*: [www.nicoloceneda.com](http://www.nicoloceneda.com) \
 *Institution*: University of St Gallen \
 *Course*: Master of Banking and Finance \
-*Last update*: 21 April 2020
+*Last update*: 23 April 2020
 
 <!-- buttons -->
 <p align="left">
