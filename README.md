@@ -1,4 +1,4 @@
-# Supervised Learning Models
+# Time Series Forecasting
 
 *Author*: Nicolo Ceneda \
 *Contact*: nicolo.ceneda@student.unisg.ch \
