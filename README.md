@@ -24,8 +24,12 @@
 │                                                univariate time series forecasting of a single point 
 │                                                in the future.
 │                                                                                                
-└── multi_series_single_forecast.py          <-- Implementation of a lstm recurrent neural network for 
-                                                 multivariate time series forecasting of a single point 
+├── multi_series_single_forecast.py          <-- Implementation of a lstm recurrent neural network for 
+│                                                multivariate time series forecasting of a single point 
+│                                                in the future.
+│                                                
+└── multi_series_multi_forecast.py           <-- Implementation of a lstm recurrent neural network for 
+                                                 multivariate time series forecasting of multiple points 
                                                  in the future.
 </pre>
 
