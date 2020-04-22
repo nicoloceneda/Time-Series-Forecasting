@@ -1,5 +1,5 @@
-""" MULTIVARIATE TIME SERIES FORECASTING
-    ------------------------------------
+""" MULTIVARIATE TIME SERIES SINGLE POINT FORECAST
+    ----------------------------------------------
     Implementation of a lstm recurrent neural network for multivariate time series forecasting of a single point in the future.
 
     This script uses a weather time series dataset, which contains 14 features collected every 10 minutes between 2009 and 2016.

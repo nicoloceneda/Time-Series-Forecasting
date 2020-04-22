@@ -1,5 +1,5 @@
-""" UNIVARIATE TIME SERIES FORECASTING
-    ----------------------------------
+""" UNIVARIATE TIME SERIES SINGLE POINT FORECAST
+    --------------------------------------------
     Implementation of a lstm recurrent neural network for univariate time series forecasting of a single point in the future.
 
     This script uses a weather time series dataset, which contains 14 features collected every 10 minutes between 2009 and 2016.
