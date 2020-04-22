@@ -69,7 +69,7 @@ def uni_dataset_generator(dataset, start_index, end_index, history_len, target_l
         history_index = range(i, i + history_len)
         data.append(np.reshape(dataset[history_index], (history_len, 1)))
 
-        # (start_index + history_size + target_size) | (end_index - 1 + target_size)
+        # (start_index + history_len + target_len) | (end_index - 1 + target_len)
         labels.append(dataset[i + history_len + target_len])
 
     return np.array(data), np.array(labels)
@@ -83,7 +83,7 @@ uni_x_valid_std, uni_y_valid_std = uni_dataset_generator(uni_data_std, train_spl
 
 
 # Create the train and valid subsets containing tuples of size (20x1) and (1,1);
-# then cache and shuffle the dataset of tuples tuples and create batches with 256 tuples each
+# then cache and shuffle the dataset of tuples and create batches with 256 tuples each
 
 batch_size = 256
 
@@ -102,11 +102,11 @@ for batch in uni_ds_train_std.take(1):
           '\nThe dataset is made up of several batches, each containing an array of 256 time series of the feature'
           '\nand an array of 256 targets. In particular, for each tuple (time series of the feature - target) the',
           '\ntarget is one element after the last element of the time series of the feature.\n',
-          '\n*** BATCH 0 ***',
-          '\n -- Tuple 0 --\n', array_time_series_of_feature.numpy()[0], array_of_targets.numpy()[0],
-          '\n -- Tuple 1 --\n', array_time_series_of_feature.numpy()[1], array_of_targets.numpy()[1],
-          '\n -- Tuple 254 --\n', array_time_series_of_feature.numpy()[254], array_of_targets.numpy()[254],
-          '\n -- Tuple 255 --\n', array_time_series_of_feature.numpy()[255], array_of_targets.numpy()[255])
+          '\n*** BATCH 0',
+          '\n -- Tuple 0\n', array_time_series_of_feature.numpy()[0], array_of_targets.numpy()[0],
+          '\n -- Tuple 1\n', array_time_series_of_feature.numpy()[1], array_of_targets.numpy()[1],
+          '\n -- Tuple 254\n', array_time_series_of_feature.numpy()[254], array_of_targets.numpy()[254],
+          '\n -- Tuple 255\n', array_time_series_of_feature.numpy()[255], array_of_targets.numpy()[255])
 
 
 # -------------------------------------------------------------------------------
@@ -140,8 +140,7 @@ simple_lstm_model.compile(optimizer='adam', loss='mae')
 # -------------------------------------------------------------------------------
 # 3. TRAIN THE MODEL
 # -------------------------------------------------------------------------------
-for x, y in uni_ds_valid_std.take(1):
-    print(simple_lstm_model.predict(x).shape)
+
 
 # Train the lstm recurrent neural network
 
@@ -155,9 +154,11 @@ history = simple_lstm_model.fit(uni_ds_train_std, epochs=10, steps_per_epoch=200
 hist = history.history
 
 plt.figure()
-plt.plot(hist['loss'])
+plt.plot(hist['loss'], 'b', label='Training loss')
+plt.plot(hist['val_loss'], 'r', label='Validation loss')
 plt.xlabel('Epoch')
-plt.title('Training loss')
+plt.title('Training and validation loss')
+plt.legend()
 plt.tick_params(axis='both', which='major')
 
 
