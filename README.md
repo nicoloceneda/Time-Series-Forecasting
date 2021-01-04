@@ -1,10 +1,10 @@
 # Time Series Forecasting
 
 *Author*: Nicolo Ceneda \
-*Contact*: nicolo.ceneda@student.unisg.ch \
+*Contact*: n.ceneda20@imperial.ac.uk \
 *Website*: [www.nicoloceneda.com](http://www.nicoloceneda.com) \
-*Institution*: University of St Gallen \
-*Course*: Master of Banking and Finance \
+*Institution*: Imperial College London \
+*Course*: PhD in Finance \
 *Last update*: 02 May 2020
 
 <!-- buttons -->
